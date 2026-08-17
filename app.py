@@ -6,16 +6,17 @@ app = Flask(__name__)
 
 
 # Load the vectorizer and model
+# Load the vectorizer and model
 def load_models():
-  try:
-    with open("cv.pkl", "rb") as f:
-      cv = pickle.load(f)
-    with open("model.pkl", "rb") as f:
-      model = pickle.load(f)
-    return cv, model
-  except Exception as e:
-    print(f"Error loading model files: {e}")
-    return None, None
+    try:
+        with open("vectorizer.pkl", "rb") as f:
+            cv = pickle.load(f)
+        with open("sentiment.pkl", "rb") as f:
+            model = pickle.load(f)
+        return cv, model
+    except Exception as e:
+        print(f"Error loading model files: {e}")
+        return None, None
 
 
 vectorizer, model = load_models()
