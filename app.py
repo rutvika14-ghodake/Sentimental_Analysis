@@ -1,25 +1,26 @@
-# app.py
-from flask import Flask, render_template_string, request
-import pickle
 import os
+import pickle
+from flask import Flask, render_template_string, request
 
 app = Flask(__name__)
 
+
 # Load the vectorizer and model
 def load_models():
-    try:
-        with open("cv.pkl", "rb") as f:
-            cv = pickle.load(f)
-        with open("model.pkl", "rb") as f:
-            model = pickle.load(f)
-        return cv, model
-    except Exception as e:
-        print(f"Error loading pickle files: {e}")
-        return None, None
+  try:
+    with open("cv.pkl", "rb") as f:
+      cv = pickle.load(f)
+    with open("model.pkl", "rb") as f:
+      model = pickle.load(f)
+    return cv, model
+  except Exception as e:
+    print(f"Error loading model files: {e}")
+    return None, None
+
 
 vectorizer, model = load_models()
 
-# HTML & CSS Template inside app.py
+# HTML & CSS Template
 HTML_LAYOUT = """
 <!DOCTYPE html>
 <html lang="en">
@@ -176,7 +177,7 @@ HTML_LAYOUT = """
         <form method="POST" action="/predict">
             <div class="form-group">
                 <label for="text">ENTER YOUR TEXT</label>
-                <textarea id="text" name="text" placeholder="Type or paste text here to analyze sentiment..." required>{{ text }}</textarea>
+                <textarea id="text" name="text" placeholder="Type or paste text here..." required>{{ text }}</textarea>
             </div>
             <button type="submit" class="btn">Analyze Sentiment</button>
         </form>
@@ -191,46 +192,47 @@ HTML_LAYOUT = """
 </html>
 """
 
+
 @app.route("/", methods=["GET"])
 def index():
-    return render_template_string(HTML_LAYOUT, text="", prediction=None)
+  return render_template_string(HTML_LAYOUT, text="", prediction=None)
+
 
 @app.route("/predict", methods=["POST"])
 def predict():
-    if not vectorizer or not model:
-        return render_template_string(
-            HTML_LAYOUT, 
-            text="", 
-            prediction="Model files (cv.pkl / model.pkl) not found!", 
-            sentiment_class="neutral"
-        )
-    
-    text = request.form.get("text", "")
-    if text:
-        # Transform input text using vectorizer
-        transformed_text = vectorizer.transform([text])
-        prediction_val = model.predict(transformed_text)[0]
+  if not vectorizer or not model:
+    return render_template_string(
+        HTML_LAYOUT,
+        text="",
+        prediction="Model files (cv.pkl / model.pkl) not loaded!",
+        sentiment_class="neutral",
+    )
 
-        # Handle numerical or string predictions
-        if str(prediction_val).lower() in ["1", "positive"]:
-            prediction = "Positive Sentiment 😊"
-            sentiment_class = "positive"
-        elif str(prediction_val).lower() in ["0", "negative"]:
-            prediction = "Negative Sentiment 😞"
-            sentiment_class = "negative"
-        else:
-            prediction = f"Sentiment: {prediction_val}"
-            sentiment_class = "neutral"
+  text = request.form.get("text", "")
+  if text:
+    transformed_text = vectorizer.transform([text])
+    prediction_val = model.predict(transformed_text)[0]
 
-        return render_template_string(
-            HTML_LAYOUT, 
-            text=text, 
-            prediction=prediction, 
-            sentiment_class=sentiment_class
-        )
+    if str(prediction_val).lower() in ["1", "positive"]:
+      prediction = "Positive Sentiment 😊"
+      sentiment_class = "positive"
+    elif str(prediction_val).lower() in ["0", "negative"]:
+      prediction = "Negative Sentiment 😞"
+      sentiment_class = "negative"
+    else:
+      prediction = f"Sentiment: {prediction_val}"
+      sentiment_class = "neutral"
 
-    return render_template_string(HTML_LAYOUT, text="", prediction=None)
+    return render_template_string(
+        HTML_LAYOUT,
+        text=text,
+        prediction=prediction,
+        sentiment_class=sentiment_class,
+    )
+
+  return render_template_string(HTML_LAYOUT, text="", prediction=None)
+
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+  port = int(os.environ.get("PORT", 5000))
+  app.run(host="0.0.0.0", port=port)
